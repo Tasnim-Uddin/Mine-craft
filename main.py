@@ -62,7 +62,7 @@ class Voxel(Button):
             model='assets/block_model',
             origin_y=0.5,
             texture=texture,
-            color=color.color(0, 0, random.uniform(0.9, 1.0)),
+            color=color.color(0, 0, 1),
             highlight_color=color.lime,
             scale=0.5
         )
