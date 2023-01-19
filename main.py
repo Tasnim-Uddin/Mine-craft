@@ -3,33 +3,44 @@ from ursina.prefabs.first_person_controller import FirstPersonController
 from numpy import floor
 from perlin_noise import PerlinNoise
 
-
 app = Ursina()
 
-
 window.title = 'Superior Minecraft'
-window.borderless = False
+window.borderless = True
 window.fullscreen = False
 window.exit_button.enabled = False
 window.fps_counter.enabled = True
 
+window.color = color.rgb(135, 206, 235)
+scene.fog_color = color.rgb(191, 198, 201)
+scene.fog_density = 0.03
+
 terrain_width = 32
+
+# block_model = load_model('assets/block_model.obj')  TODO
+# hand_model = load_model('assets/hand_model.obj')  TODO
+
 
 grass = load_texture('assets/grass_block.png')
 dirt = load_texture('assets/dirt_block.png')
 stone = load_texture('assets/stone_block.png')
 brick = load_texture('assets/brick_block.png')
-hand = load_texture('assets/hand.png')
+hand_texture = load_texture('assets/hand.png')
 sky = load_texture('assets/sky.png')
 
-punch_sound = Audio('assets/punch_sound', loop=False, autoplay=False)
+punch_sound = Audio('assets/block_sound', loop=False, autoplay=False)
 background_music = Audio('assets/sweden', loop=True, autoplay=True)
 
 block_pick = 1
 
-noise = PerlinNoise(octaves=1, seed=2025)
+noise = PerlinNoise(octaves=2, seed=2023)
 amplifier = 6
 frequency = 24
+
+player = FirstPersonController()
+player.gravity = 0.5
+player.normal_speed = player.speed
+player.jump_height = 1.5
 
 
 def update():
@@ -67,6 +78,11 @@ class Voxel(Button):
         )
 
     def input(self, key):
+        if key == 'control':
+            player.speed = player.normal_speed * 1.5
+        if key == 'control up':
+            player.speed = player.normal_speed
+
         if self.hovered:
             if key == 'right mouse down':
                 punch_sound.play()
@@ -95,12 +111,15 @@ class Sky(Entity):
         )
 
 
+# sky = Sky()  TODO
+
+
 class Hand(Entity):
     def __init__(self):
         super().__init__(
             parent=camera.ui,
             model='assets/hand_model',
-            texture=hand,
+            texture=hand_texture,
             scale=0.2,
             rotation=Vec3(150, -10, 0),
             position=Vec2(0.6, -0.6)
@@ -113,12 +132,12 @@ class Hand(Entity):
         self.position = Vec2(0.6, -0.6)
 
 
+hand = Hand()
+
+
 for z in range(terrain_width):
     for x in range(terrain_width):
-        block = Voxel(position=(x, floor(noise([x/frequency, z/frequency]) * amplifier), z))
+        block = Voxel(position=(x, floor(noise([x / frequency, z / frequency]) * amplifier), z))
 
-player = FirstPersonController()
-sky = Sky()
-hand = Hand()
 
 app.run()
