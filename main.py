@@ -1,143 +1,88 @@
-from ursina import *
+from ursina import Ursina, window, color, floor, lerp, time, Sky, Audio
 from ursina.prefabs.first_person_controller import FirstPersonController
-from numpy import floor
-from perlin_noise import PerlinNoise
+from mesh_terrain import MeshTerrain
+import random
 
 app = Ursina()
 
-window.title = 'Superior Minecraft'
+
 window.borderless = True
 window.fullscreen = False
 window.exit_button.enabled = False
 window.fps_counter.enabled = True
+window.fullscreen = True
 
 window.color = color.rgb(135, 206, 235)
-scene.fog_color = color.rgb(191, 198, 201)
-scene.fog_density = 0.03
-
-terrain_width = 32
-
-# block_model = load_model('assets/block_model.obj')  TODO
-# hand_model = load_model('assets/hand_model.obj')  TODO
-
-
-grass = load_texture('assets/grass_block.png')
-dirt = load_texture('assets/dirt_block.png')
-stone = load_texture('assets/stone_block.png')
-brick = load_texture('assets/brick_block.png')
-hand_texture = load_texture('assets/hand.png')
-sky = load_texture('assets/sky.png')
-
-punch_sound = Audio('assets/block_sound', loop=False, autoplay=False)
-background_music = Audio('assets/sweden', loop=True, autoplay=True)
-
-block_pick = 1
-
-noise = PerlinNoise(octaves=2, seed=2023)
-amplifier = 6
-frequency = 24
+sky = Sky()
+sky.color = window.color
 
 player = FirstPersonController()
-player.gravity = 0.5
-player.normal_speed = player.speed
-player.jump_height = 1.5
+player.gravity = 0.0
+previous_x = player.x
+previous_z = player.z
+
+terrain = MeshTerrain()
+
+count = 0
+
+beginning_music = Audio('assets/audio/music/beginning.wav', loop=False, autoplay=False)
+danny_music = Audio('assets/audio/music/danny.wav', loop=False, autoplay=False, volume=0.65)
+living_mice_music = Audio('assets/audio/music/living_mice.wav', loop=False, autoplay=False)
+mice_on_venus_music = Audio('assets/audio/music/mice_on_venus.wav', loop=False, autoplay=False)
+sweden_music = Audio('assets/audio/music/sweden.wav', loop=False, autoplay=False)
+minecraft_music = Audio('assets/audio/music/minecraft.wav', loop=False, autoplay=False)
+wet_hands_music = Audio('assets/audio/music/wet_hands.wav', loop=False, autoplay=False, volume=0.75)
+
+music = random.randrange(1, 8)
+if music == 1:
+    beginning_music.play()
+elif music == 2:
+    danny_music.play()
+elif music == 3:
+    living_mice_music.play()
+elif music == 4:
+    mice_on_venus_music.play()
+elif music == 5:
+    sweden_music.play()
+elif music == 6:
+    minecraft_music.play()
+elif music == 7:
+    wet_hands_music.play()
 
 
 def update():
-    global block_pick
+    global count, previous_x, previous_z
 
-    if held_keys['escape']:
-        quit()
+    count += 1
+    if count == 2:
+        # generate terrain at current chunk position
+        terrain.generate_terrain()
+        count = 0
 
-    if held_keys['left mouse'] or held_keys['right mouse']:
-        hand.active()
+    # change chunk position based on the player's current position
+    if abs(player.x - previous_x) > 4 or abs(player.z - previous_z) > 4:
+        previous_x = player.x
+        previous_z = player.z
+        terrain.chunk_generation.reset(previous_x, previous_z)
+
+    block_found = False
+    step = 2
+    height = 1.4
+    x = str(floor(player.x + 0.5))
+    y = floor(player.y + 0.5)
+    z = str(floor(player.z + 0.5))
+    for i in range(-step, step):
+        if terrain.terrain_dictionary.get(f'x{x}y{str(y + i)}z{z}') == 'terrain_present':
+            target = y + i + height
+            block_found = True
+            break
+    if block_found:
+        player.y = lerp(player.y, target, 6 * time.dt)
     else:
-        hand.passive()
-
-    if held_keys['1']:
-        block_pick = 1
-    if held_keys['2']:
-        block_pick = 2
-    if held_keys['3']:
-        block_pick = 3
-    if held_keys['4']:
-        block_pick = 4
+        player.y -= 9.8 * time.dt
 
 
-class Voxel(Button):
-    def __init__(self, position=(0, 0, 0), texture=grass):
-        super().__init__(
-            parent=scene,
-            position=position,
-            model='assets/block_model',
-            origin_y=0.5,
-            texture=texture,
-            color=color.color(0, 0, 1),
-            highlight_color=color.lime,
-            scale=0.5
-        )
-
-    def input(self, key):
-        if key == 'control':
-            player.speed = player.normal_speed * 1.5
-        if key == 'control up':
-            player.speed = player.normal_speed
-
-        if self.hovered:
-            if key == 'right mouse down':
-                punch_sound.play()
-                if block_pick == 1:
-                    placed_block = Voxel(position=self.position + mouse.normal, texture=grass)
-                if block_pick == 2:
-                    placed_block = Voxel(position=self.position + mouse.normal, texture=dirt)
-                if block_pick == 3:
-                    placed_block = Voxel(position=self.position + mouse.normal, texture=stone)
-                if block_pick == 4:
-                    placed_block = Voxel(position=self.position + mouse.normal, texture=brick)
-
-            if key == 'left mouse down':
-                punch_sound.play()
-                destroy(self)
-
-
-class Sky(Entity):
-    def __init__(self):
-        super().__init__(
-            parent=scene,
-            model='sphere',
-            texture=sky,
-            scale=150,
-            double_sided=True
-        )
-
-
-# sky = Sky()  TODO
-
-
-class Hand(Entity):
-    def __init__(self):
-        super().__init__(
-            parent=camera.ui,
-            model='assets/hand_model',
-            texture=hand_texture,
-            scale=0.2,
-            rotation=Vec3(150, -10, 0),
-            position=Vec2(0.6, -0.6)
-        )
-
-    def active(self):
-        self.position = Vec2(0.5, -0.55)
-
-    def passive(self):
-        self.position = Vec2(0.6, -0.6)
-
-
-hand = Hand()
-
-
-for z in range(terrain_width):
-    for x in range(terrain_width):
-        block = Voxel(position=(x, floor(noise([x / frequency, z / frequency]) * amplifier), z))
+terrain.generate_terrain()
 
 
 app.run()
