@@ -1,22 +1,27 @@
-from ursina import Ursina, window, color, floor, lerp, time, Sky, Audio
+# https://www.youtube.com/watch?v=f0bPI70yuKU&ab_channel=RedHendev    go to 58:00
+
+
+
+
+from ursina import Ursina, window, color, floor, lerp, time, Sky, Audio, camera
 from ursina.prefabs.first_person_controller import FirstPersonController
 from mesh_terrain import MeshTerrain
 import random
 
 app = Ursina()
 
-
 window.borderless = True
 window.fullscreen = False
 window.exit_button.enabled = False
 window.fps_counter.enabled = True
-window.fullscreen = True
+window.fullscreen = False
 
 window.color = color.rgb(135, 206, 235)
 sky = Sky()
 sky.color = window.color
 
 player = FirstPersonController()
+player.cursor.visible = False
 player.gravity = 0.0
 previous_x = player.x
 previous_z = player.z
@@ -50,6 +55,10 @@ elif music == 7:
     wet_hands_music.play()
 
 
+def input(key):
+    terrain.input(key)
+
+
 def update():
     global count, previous_x, previous_z
 
@@ -58,16 +67,18 @@ def update():
         # generate terrain at current chunk position
         terrain.generate_terrain()
         count = 0
+        # highlight the nearest looked at block within chunk range
+        terrain.update(block_position=player.position, block_camera=camera)
 
     # change chunk position based on the player's current position
     if abs(player.x - previous_x) > 4 or abs(player.z - previous_z) > 4:
         previous_x = player.x
         previous_z = player.z
-        terrain.chunk_generation.reset(previous_x, previous_z)
+        terrain.chunk_generation.reset(x=previous_x, z=previous_z)
 
     block_found = False
     step = 2
-    height = 1.4
+    height = 1.86
     x = str(floor(player.x + 0.5))
     y = floor(player.y + 0.5)
     z = str(floor(player.z + 0.5))
@@ -83,6 +94,5 @@ def update():
 
 
 terrain.generate_terrain()
-
 
 app.run()
