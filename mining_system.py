@@ -1,4 +1,4 @@
-from ursina import Entity, color, floor
+from ursina import Entity, color, floor, Vec3
 
 highlighter = Entity(model='block.obj', color=color.rgba(1, 1, 0, 0.4))
 highlighter.scale = 1.001  # so that the highlighted block isn't directly on the face of the actual block, but slightly bigger
@@ -28,6 +28,9 @@ def mine(terrain_dictionary, vertices_dictionary, chunk):
     current_vertex = vertices_dictionary.get(f'x{str(floor(highlighter.x))}'
                                              f'y{str(floor(highlighter.y))}'
                                              f'z{str(floor(highlighter.z))}')
+    #check if block is highlighted and if not then dont mine
+    if current_vertex is None:
+        return
     for vertex in range(current_vertex[1] + 1, current_vertex[1] + 37):
         # looks for the block's vertex at that chunk and iterates through each vertex of that block in the chunk and gets the y position of the block vertex. it then changes the y position to +999 so it appears as if it has disappeared or block is mined
         chunk[current_vertex[0]].model.vertices[vertex][1] += 999
@@ -39,3 +42,5 @@ def mine(terrain_dictionary, vertices_dictionary, chunk):
     vertices_dictionary[f'x{str(floor(highlighter.x))}'
                         f'y{str(floor(highlighter.y))}'
                         f'z{str(floor(highlighter.z))}'] = None
+
+    return highlighter.position, current_vertex[0]
