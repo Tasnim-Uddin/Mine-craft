@@ -1,6 +1,7 @@
 from ursina import Ursina, window, color, floor, lerp, time, Sky, Audio, camera
 from ursina.prefabs.first_person_controller import FirstPersonController
 from mesh_terrain import MeshTerrain
+from snow_flake import SnowFlake
 import random
 
 app = Ursina()
@@ -24,6 +25,7 @@ previous_z = player.z
 terrain = MeshTerrain()
 
 count = 0
+snow_flake_num = 512
 
 beginning_music = Audio(sound_file_name='assets/audio/music/beginning.wav', loop=False, autoplay=False)
 danny_music = Audio(sound_file_name='assets/audio/music/danny.wav', loop=False, autoplay=False, volume=0.65)
@@ -89,6 +91,14 @@ def update():
     else:
         player.y -= 9.8 * time.dt
 
+    for current in range(len(snow_flakes)):
+        snow_flakes[current].physics(player_position=player.position)
+
+
+snow_flakes = []
+for i in range(snow_flake_num):
+    current_snow_flake = SnowFlake(position=player.position)
+    snow_flakes.append(current_snow_flake)
 
 terrain.generate_terrain()
 

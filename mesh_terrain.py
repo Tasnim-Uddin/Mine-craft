@@ -92,7 +92,7 @@ class MeshTerrain:
         elif block_type == 'water':
             texture_x = 8
             texture_y = 6
-        if random.random() > 0.86 and y < -2:
+        if random.random() > 0.86 and y < -4:
             # randomly place stone blocks
             texture_x = 11
             texture_y = 7
