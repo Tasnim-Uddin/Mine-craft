@@ -35,6 +35,9 @@ sweden_music = Audio(sound_file_name='assets/audio/music/sweden.wav', loop=False
 minecraft_music = Audio(sound_file_name='assets/audio/music/minecraft.wav', loop=False, autoplay=False)
 wet_hands_music = Audio(sound_file_name='assets/audio/music/wet_hands.wav', loop=False, autoplay=False, volume=0.75)
 
+grass_footstep = Audio(sound_file_name='assets/audio/sounds/grass_footstep.wav', loop=False, autoplay=False)
+snow_footstep = Audio(sound_file_name='assets/audio/sounds/snow_footstep.mp3', loop=False, autoplay=False)
+
 music = random.randrange(1, 8)
 if music == 1:
     beginning_music.play()
@@ -70,10 +73,15 @@ def update():
         terrain.update(block_position=player.position, block_camera=camera)
 
     # change chunk position based on the player's current position
-    if abs(player.x - previous_x) > 4 or abs(player.z - previous_z) > 4:
+    if abs(player.x - previous_x) > 1 or abs(player.z - previous_z) > 1:
         previous_x = player.x
         previous_z = player.z
         terrain.chunk_generation.reset(x=previous_x, z=previous_z)
+        if player.y > 4:
+            if not snow_footstep.playing:
+                snow_footstep.play()
+        elif not grass_footstep.playing:
+            grass_footstep.play()
 
     block_found = False
     step = 2
