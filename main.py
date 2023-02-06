@@ -1,7 +1,7 @@
-from ursina import Ursina, window, color, floor, lerp, time, Sky, Audio, camera
+from ursina import Ursina, window, time, color, floor, lerp, Sky, Audio, camera
 from ursina.prefabs.first_person_controller import FirstPersonController
 from mesh_terrain import MeshTerrain
-from snow_flake import SnowFlake
+from snow_flake import *
 import random
 
 app = Ursina()
@@ -19,13 +19,14 @@ sky.color = window.color
 player = FirstPersonController()
 player.cursor.visible = False
 player.gravity = 0.0
+player.normal_speed = player.speed
 previous_x = player.x
 previous_z = player.z
 
 terrain = MeshTerrain()
+# snow = Snowfall(player)
 
 count = 0
-snow_flake_num = 512
 
 beginning_music = Audio(sound_file_name='assets/audio/music/beginning.mp3', loop=False, autoplay=False)
 danny_music = Audio(sound_file_name='assets/audio/music/danny.mp3', loop=False, autoplay=False)
@@ -60,6 +61,12 @@ elif music == 8:
 
 def input(key):
     terrain.input(key)
+    if key == 'control':
+        player.speed = player.normal_speed * 1.5
+
+    if key == 'control up':
+        player.speed = player.normal_speed
+
     if key == 'escape':
         exit()
 
@@ -86,14 +93,19 @@ def update():
         elif not grass_footstep.playing:
             grass_footstep.play()
 
+    # auto jump
     block_found = False
     step = 2
     height = 1.86
-    x = str(floor(player.x + 0.5))
+    x = floor(player.x + 0.5)
     y = floor(player.y + 0.5)
-    z = str(floor(player.z + 0.5))
+    z = floor(player.z + 0.5)
     for i in range(-step, step):
-        if terrain.terrain_dictionary.get(f'x{x}y{str(y + i)}z{z}') == 'terrain_present':
+        if terrain.terrain_dictionary.get((x, y + i, z)) == 'terrain_present':
+            if terrain.terrain_dictionary.get((x, y + i + 1, z)) == 'terrain_present':
+                target = y + i + 1 + height
+                block_found = True
+                break
             target = y + i + height
             block_found = True
             break
@@ -102,14 +114,6 @@ def update():
     else:
         player.y -= 9.8 * time.dt
 
-    for current in range(len(snow_flakes)):
-        snow_flakes[current].physics(player_position=player.position)
-
-
-snow_flakes = []
-for i in range(snow_flake_num):
-    current_snow_flake = SnowFlake(position=player.position)
-    snow_flakes.append(current_snow_flake)
 
 terrain.generate_terrain()
 

@@ -2,10 +2,13 @@ from ursina import Entity, time
 import random
 
 
+snow_flake_num = 128
+
+
 class SnowFlake(Entity):
     player = None
 
-    @staticmethod  # so this isn't created for every instance of the class (so all snowflakes have the same one)
+    @staticmethod  # takes player entity and stores it in SnowflakeFlake.player variable
     def set_player(player_entity):
         SnowFlake.player = player_entity
 
@@ -36,6 +39,6 @@ class Snowfall:
     def __init__(self, player_reference):
         self.snow_flakes = []
         SnowFlake.set_player(player_reference)
-        for i in range(128):
+        for i in range(snow_flake_num):
             current_snow_flake = SnowFlake(player_reference.position)
             self.snow_flakes.append(current_snow_flake)

@@ -2,6 +2,7 @@ from ursina import Mesh, load_model, Vec2
 from random_terrain_generation import RandomTerrainGeneration
 from chunk_generation import ChunkGeneration
 from mining_system import *
+from building_system import *
 import random
 
 
@@ -32,12 +33,21 @@ class MeshTerrain:
         highlight(block_position=block_position, block_camera=block_camera, terrain_dictionary=self.terrain_dictionary)
 
     def input(self, key):
-        if (key == 'left mouse up') and highlighter.visible:
+        if (key == 'left mouse up') and highlighter.visible:  # mining
             block_centre = mine(terrain_dictionary=self.terrain_dictionary,
                                 vertices_dictionary=self.vertices_dictionary, chunk=self.chunks)
             if block_centre is not None:
                 self.generate_walls(centre=block_centre[0], chunk=block_centre[1])
                 self.chunks[block_centre[1]].model.generate()
+
+        if (key == 'right mouse up') and highlighter.visible:  # building
+            build_site = check_building_possible(build_site=highlighter.position,
+                                                 terrain_dictionary=self.terrain_dictionary)
+            if build_site is not None:
+                self.generate_block(x=floor(build_site.x), y=floor(build_site.y), z=floor(build_site.z), chunk=0,
+                                    block_type='grass')
+                gap_wall(terrain_dictionary=self.terrain_dictionary, build_site=build_site)
+                self.chunks[0].model.generate()
 
     # after mining to create sense of depth in hole
     def generate_walls(self, centre, chunk):
@@ -51,33 +61,29 @@ class MeshTerrain:
                             Vec3(0, 0, 1)]
         for face in range(0, 6):
             new_position = centre + current_position[face]
-            if self.terrain_dictionary.get(f'x{str(floor(new_position.x))}'
-                                           f'y{str(floor(new_position.y))}'
-                                           f'z{str(floor(new_position.z))}') is None:
-                self.generate_block(x=new_position.x, y=new_position.y, z=new_position.z, chunk=chunk, gap=False, block_type='soil')
+            if self.terrain_dictionary.get((floor(new_position.x),
+                                            floor(new_position.y),
+                                            floor(new_position.z))) is None:
+                self.generate_block(x=new_position.x, y=new_position.y, z=new_position.z, chunk=chunk, gap=False,
+                                    block_type='soil')
+                self.chunks[0].model.generate()
 
-    def generate_block(self, x, y, z, chunk='X', gap=True, block_type='grass'):
-        if chunk == 'X':
+    def generate_block(self, x, y, z, chunk=-1, gap=True, block_type='grass'):
+        if chunk == -1:
             chunk = self.current_chunk
         model = self.chunks[chunk].model
         # gets all 36 vertices of a block and joins them to form a cube (creates a mesh not entity so faster to process)
         model.vertices.extend([Vec3(x, y, z) + vertex for vertex in self.block_model.vertices])
         # record terrain in the terrain dictionary
-        self.terrain_dictionary[f'x{str(floor(x))}'
-                                f'y{str(floor(y))}'
-                                f'z{str(floor(z))}'] = 'terrain_present'
+        self.terrain_dictionary[(floor(x), floor(y), floor(z))] = 'terrain_present'
         # also record gap above this position to correct spawning walls around mined block after mining
         if gap:
-            key = (f'x{str(floor(x))}'
-                   f'y{str(floor(y + 1))}'
-                   f'z{str(floor(z))}')
+            key = (floor(x), floor(y + 1), floor(z))
             if self.terrain_dictionary.get(key) is None:
                 self.terrain_dictionary[key] = 'gap'
         # record chunk index and first vertex of current block in that chunk
         vertex = (chunk, len(model.vertices) - 37)
-        self.vertices_dictionary[f'x{str(floor(x))}'
-                                 f'y{str(floor(y))}'
-                                 f'z{str(floor(z))}'] = vertex
+        self.vertices_dictionary[(floor(x), floor(y), floor(z))] = vertex
         # texture_x and texture_y are the positions in the texture atlas for the block texture
         # horizontal: left to right is 8 to 16
         # vertical: top to bottom is 7 to 0
@@ -110,10 +116,10 @@ class MeshTerrain:
         for current_x in range(-distance, distance):
             for current_z in range(-distance, distance):
                 y = floor(self.perlin.get_height(x=x + current_x, z=z + current_z))
-                if self.terrain_dictionary.get(f'x{str(floor(x + current_x))}'
-                                               f'y{str(floor(y))}'
-                                               f'z{str(floor(z + current_z))}') is None:
-                    self.generate_block(x=x+current_x, y=y, z=z+current_z)
+                if self.terrain_dictionary.get((floor(x + current_x),
+                                                floor(y),
+                                                floor(z + current_z))) is None:
+                    self.generate_block(x=x + current_x, y=y, z=z + current_z)
         self.chunks[self.current_chunk].model.generate()
         if self.current_chunk < self.chunk_num - 1:
             self.current_chunk += 1
