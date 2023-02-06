@@ -27,18 +27,19 @@ terrain = MeshTerrain()
 count = 0
 snow_flake_num = 512
 
-beginning_music = Audio(sound_file_name='assets/audio/music/beginning.wav', loop=False, autoplay=False)
-danny_music = Audio(sound_file_name='assets/audio/music/danny.wav', loop=False, autoplay=False, volume=0.65)
-living_mice_music = Audio(sound_file_name='assets/audio/music/living_mice.wav', loop=False, autoplay=False)
-mice_on_venus_music = Audio(sound_file_name='assets/audio/music/mice_on_venus.wav', loop=False, autoplay=False)
-sweden_music = Audio(sound_file_name='assets/audio/music/sweden.wav', loop=False, autoplay=False)
-minecraft_music = Audio(sound_file_name='assets/audio/music/minecraft.wav', loop=False, autoplay=False)
-wet_hands_music = Audio(sound_file_name='assets/audio/music/wet_hands.wav', loop=False, autoplay=False, volume=0.75)
+beginning_music = Audio(sound_file_name='assets/audio/music/beginning.mp3', loop=False, autoplay=False)
+danny_music = Audio(sound_file_name='assets/audio/music/danny.mp3', loop=False, autoplay=False)
+living_mice_music = Audio(sound_file_name='assets/audio/music/living_mice.mp3', loop=False, autoplay=False)
+mice_on_venus_music = Audio(sound_file_name='assets/audio/music/mice_on_venus.mp3', loop=False, autoplay=False)
+sweden_music = Audio(sound_file_name='assets/audio/music/sweden.mp3', loop=False, autoplay=False)
+minecraft_music = Audio(sound_file_name='assets/audio/music/minecraft.mp3', loop=False, autoplay=False)
+wet_hands_music = Audio(sound_file_name='assets/audio/music/wet_hands.mp3', loop=False, autoplay=False)
+dry_hands_music = Audio(sound_file_name='assets/audio/music/wet_hands.mp3', loop=False, autoplay=False)
 
-grass_footstep = Audio(sound_file_name='assets/audio/sounds/grass_footstep.wav', loop=False, autoplay=False)
+grass_footstep = Audio(sound_file_name='assets/audio/sounds/grass_footstep.mp3', loop=False, autoplay=False)
 snow_footstep = Audio(sound_file_name='assets/audio/sounds/snow_footstep.mp3', loop=False, autoplay=False)
 
-music = random.randrange(1, 8)
+music = random.randrange(1, 9)
 if music == 1:
     beginning_music.play()
 elif music == 2:
@@ -53,6 +54,8 @@ elif music == 6:
     minecraft_music.play()
 elif music == 7:
     wet_hands_music.play()
+elif music == 8:
+    dry_hands_music.play()
 
 
 def input(key):
