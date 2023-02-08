@@ -1,4 +1,4 @@
-from ursina import Mesh, load_model, Vec2
+from ursina import Mesh, load_model, Vec2, held_keys
 from random_terrain_generation import RandomTerrainGeneration
 from chunk_generation import ChunkGeneration
 from mining_system import *
@@ -13,10 +13,10 @@ class MeshTerrain:
         self.num_vertices = len(self.block_model.vertices)
 
         self.chunks = []
-        self.chunk_num = 128
+        self.chunk_num = 1024
         self.chunk_width = 4  # Even because in generate_terrain(), distance is half of chunk_width on each side
         self.chunk_generation = ChunkGeneration(chunk_width=self.chunk_width)
-        self.current_chunk = 0
+        self.current_chunk = 1
 
         self.terrain_dictionary = {}
         self.vertices_dictionary = {}
@@ -28,18 +28,25 @@ class MeshTerrain:
             block.texture_scale *= 64 / block.texture.width
             self.chunks.append(block)
 
+    def break_block(self):
+        block_centre = mine(terrain_dictionary=self.terrain_dictionary,
+                            vertices_dictionary=self.vertices_dictionary, chunk=self.chunks)
+        if block_centre is not None:
+            self.generate_walls(centre=block_centre[0], chunk=block_centre[1])
+            self.chunks[block_centre[1]].model.generate()
+
     # highlight the nearest block that player is looking at
     def update(self, block_position, block_camera):
         highlight(block_position=block_position, block_camera=block_camera, terrain_dictionary=self.terrain_dictionary)
+        # Insta mine (spam mine row of blocks)
+        # if highlighter.visible:
+        #     for key, value in held_keys.items():
+        #         if (key == 'left mouse') and (value == 1):  # 1: key is being held down ---- 0: key not held down anymore
+        #             self.break_block()
 
     def input(self, key):
         if (key == 'left mouse up') and highlighter.visible:  # mining
-            block_centre = mine(terrain_dictionary=self.terrain_dictionary,
-                                vertices_dictionary=self.vertices_dictionary, chunk=self.chunks)
-            if block_centre is not None:
-                self.generate_walls(centre=block_centre[0], chunk=block_centre[1])
-                self.chunks[block_centre[1]].model.generate()
-
+            self.break_block()
         if (key == 'right mouse up') and highlighter.visible:  # building
             build_site = check_building_possible(build_site=highlighter.position,
                                                  terrain_dictionary=self.terrain_dictionary)
@@ -100,6 +107,9 @@ class MeshTerrain:
             texture_y = 6
         if random.random() > 0.86 and y < -4:
             # randomly place stone blocks
+            texture_x = 11
+            texture_y = 7
+        if y < -7:
             texture_x = 11
             texture_y = 7
         # if high enough, use snow blocks instead of grass

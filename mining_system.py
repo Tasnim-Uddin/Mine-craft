@@ -2,14 +2,16 @@ from ursina import Entity, color, floor, Vec3
 
 highlighter = Entity(model='block.obj', color=color.rgba(1, 1, 0, 0.4))
 highlighter.scale = 1.001  # so that the highlighted block isn't directly on the face of the actual block, but slightly bigger
-player_height = 1.86
+player_height = 1.7
+
 
 def highlight(block_position, block_camera, terrain_dictionary):
-    for i in range(1, 15):  # goes from current camera position and shoots out and if it finds a block within that range then it highlights is (so selects it)
-        current_position = block_position + Vec3(0, player_height, 0) + block_camera.forward * i  # adjust highlighter for player's height
-        x = floor(current_position.x)
+    for i in range(1, 32):  # goes from current camera position and shoots out and if it finds a block within that range then it highlights is (so selects it)
+        current_position = block_position + Vec3(0, player_height, 0) + block_camera.forward * (i*0.5)  # adjust highlighter for player's height
+        # TODO fix to make it 100% accurate
+        x = round(current_position.x)
         y = floor(current_position.y)
-        z = floor(current_position.z)
+        z = round(current_position.z)
         highlighter.x = x
         highlighter.y = y
         highlighter.z = z

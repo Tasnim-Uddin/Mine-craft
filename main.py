@@ -17,7 +17,8 @@ sky = Sky()
 sky.color = window.color
 
 player = FirstPersonController()
-player.cursor.visible = False
+player_height = 1.7
+player.cursor.visible = True
 player.gravity = 0.0
 player.normal_speed = player.speed
 previous_x = player.x
@@ -25,8 +26,10 @@ previous_z = player.z
 
 terrain = MeshTerrain()
 # snow = Snowfall(player)
+generating_terrain = True
 
-count = 0
+cow = Entity(model='assets/models/cow.obj', texture='assets/textures/mobs/cow.png')
+cow.position = player.position + player.forward * 7
 
 beginning_music = Audio(sound_file_name='assets/audio/music/beginning.mp3', loop=False, autoplay=False)
 danny_music = Audio(sound_file_name='assets/audio/music/danny.mp3', loop=False, autoplay=False)
@@ -59,28 +62,42 @@ elif music == 8:
     dry_hands_music.play()
 
 
+for i in range(128):
+    terrain.generate_terrain()
+
+
 def input(key):
+    global generating_terrain
+
     terrain.input(key)
+
+    if key == 'escape':
+        exit()
+
     if key == 'control':
         player.speed = player.normal_speed * 1.5
 
     if key == 'control up':
         player.speed = player.normal_speed
 
-    if key == 'escape':
-        exit()
+    if key == 'g':
+        generating_terrain = not generating_terrain
 
 
 def update():
-    global count, previous_x, previous_z
+    global previous_x, previous_z
 
-    # generate terrain at current chunk position
-    terrain.generate_terrain()
+    # highlight the nearest looked at block within chunk range
+    terrain.update(block_position=player.position, block_camera=camera)
+
+    count = 0
     count += 1
-    if count == 2:
+    if count == 4:
         count = 0
-        # highlight the nearest looked at block within chunk range
-        terrain.update(block_position=player.position, block_camera=camera)
+        # generate terrain at current chunk position
+        if generating_terrain:
+            for _ in range(4):
+                terrain.generate_terrain()
 
     # change chunk position based on the player's current position
     if abs(player.x - previous_x) > 1 or abs(player.z - previous_z) > 1:
@@ -96,17 +113,16 @@ def update():
     # auto jump
     block_found = False
     step = 2
-    height = 1.86
     x = floor(player.x + 0.5)
     y = floor(player.y + 0.5)
     z = floor(player.z + 0.5)
     for i in range(-step, step):
         if terrain.terrain_dictionary.get((x, y + i, z)) == 'terrain_present':
             if terrain.terrain_dictionary.get((x, y + i + 1, z)) == 'terrain_present':
-                target = y + i + 1 + height
+                target = y + i + 1 + player_height
                 block_found = True
                 break
-            target = y + i + height
+            target = y + i + player_height
             block_found = True
             break
     if block_found:
@@ -114,7 +130,5 @@ def update():
     else:
         player.y -= 9.8 * time.dt
 
-
-terrain.generate_terrain()
 
 app.run()
